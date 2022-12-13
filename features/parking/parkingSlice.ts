@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { RootState, AppThunk } from '../../app/store'
 
-type SpaceState = {
+export type SpaceState = {
   id: string
   registration: string | null
   arrival: Date | null

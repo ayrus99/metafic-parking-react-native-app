@@ -7,10 +7,17 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  Modal,
 } from 'react-native'
 
 import { useAppSelector, useAppDispatch } from '../../app/hooks'
-import { initialize, fill, remove, selectSpaces } from './parkingSlice'
+import {
+  initialize,
+  fill,
+  remove,
+  selectSpaces,
+  SpaceState,
+} from './parkingSlice'
 
 export function Parking() {
   const spaces = useAppSelector(selectSpaces)
@@ -18,6 +25,12 @@ export function Parking() {
 
   const [numOfSpaces, setNumOfSpaces] = useState(0)
   const [regNum, setRegNum] = useState('')
+  const [parkOutSpace, setParkOutSpace] = useState<SpaceState>({
+    id: -1,
+    arrival: null,
+    registration: null,
+  })
+  const [parkOutModal, setParkOutModal] = useState(false)
 
   const initializeHandler = () => {
     try {
@@ -35,12 +48,25 @@ export function Parking() {
     }
   }
 
-  const removeFormHandler = (id: number) => {
+  const parkOutHandler = () => {
     try {
-      dispatch(remove(id))
+      dispatch(remove(parseInt(parkOutSpace.id)))
+      setParkOutModal(false)
     } catch (error) {
       Alert.alert('Error', 'Something Went Wrong.')
     }
+  }
+
+  const getDuration = (arrival: Date) => {
+    return (
+      Math.abs(new Date().getTime() - arrival.getTime()) /
+      (1000 * 60 * 60)
+    ).toFixed(2)
+  }
+
+  const getAmount = (arrival: Date) => {
+    const duration = parseInt(getDuration(arrival))
+    return duration <= 2 ? 10 : (duration - 2) * 10
   }
 
   return spaces.length === 0 ? (
@@ -60,6 +86,49 @@ export function Parking() {
     </View>
   ) : (
     <ScrollView contentContainerStyle={styles.scrollContent}>
+      <Modal
+        visible={parkOutModal}
+        transparent={true}
+        onRequestClose={() => setParkOutModal(false)}
+      >
+        <View style={styles.dialogContainer}>
+          <View style={styles.dialogBox}>
+            <Text style={{ fontWeight: 'bold', fontSize: 20 }}>
+              Parking Checkout
+            </Text>
+            <Text>Id: {parkOutSpace.id}</Text>
+            <Text>Registraion: {parkOutSpace.registration}</Text>
+            <Text>Arrival: {parkOutSpace.arrival?.toLocaleTimeString()}</Text>
+            <Text>Departure: {new Date().toLocaleTimeString()}</Text>
+            <Text>
+              Duration:{' '}
+              {getDuration(
+                parkOutSpace.arrival ? parkOutSpace.arrival : new Date(),
+              )}
+              hrs
+            </Text>
+            <Text>
+              Amount: $
+              {getAmount(
+                parkOutSpace.arrival ? parkOutSpace.arrival : new Date(),
+              )}
+            </Text>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => setParkOutModal(false)}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={parkOutHandler}>
+                <Text style={styles.buttonText}>Paid</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="Enter Regitration Number"
@@ -77,8 +146,14 @@ export function Parking() {
           <TouchableOpacity
             key={index}
             style={space.registration ? styles.parkedSpace : styles.emptySpace}
+            // onPress={() => {
+            //   space.arrival && removeFormHandler(parseInt(space.id))
+            // }10
             onPress={() => {
-              space.arrival && removeFormHandler(parseInt(space.id))
+              if (space.arrival) {
+                setParkOutSpace(space)
+                setParkOutModal(true)
+              }
             }}
           >
             <View>
@@ -126,7 +201,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 10,
     marginTop: 10,
-    alignSelf: 'center'
+    alignSelf: 'center',
   },
   buttonText: {
     fontWeight: 'bold',
@@ -137,7 +212,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 10,
     padding: 5,
-    backgroundColor:'lightgrey'
+    backgroundColor: 'lightgrey',
   },
   emptySpace: {
     borderColor: 'black',
@@ -162,5 +237,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-evenly',
+  },
+  dialogContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dialogBox: {
+    shadowColor: 'black',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    shadowOpacity: 0.26,
+    elevation: 5,
+    padding: 10,
+    borderRadius: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    backgroundColor: 'white',
+    width: '80%',
+    //height: 150,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    marginTop: 5,
   },
 })
