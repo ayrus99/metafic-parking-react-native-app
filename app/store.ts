@@ -1,14 +1,28 @@
-import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
-import parkingReducer from '../features/parking/parkingSlice';
+import {
+  combineReducers,
+  configureStore,
+  PreloadedState,
+  ThunkAction,
+  Action
+} from '@reduxjs/toolkit'
+import parkingReducer from '../features/parking/parkingSlice'
+// Create the root reducer independently to obtain the RootState type
+const rootReducer = combineReducers({
+  parking: parkingReducer,
+},)
+export const setupStore =(preloadedState?: PreloadedState<RootState>) =>{
+  return configureStore({
+    reducer: rootReducer,
+    preloadedState
+  })
+}
+export type RootState = ReturnType<typeof rootReducer>
+export type AppStore = ReturnType<typeof setupStore>
+export type AppDispatch = AppStore['dispatch']
 
-export const store = configureStore({
-  reducer: {
-    parking: parkingReducer,
-  },
-});
 
-export type AppDispatch = typeof store.dispatch;
-export type RootState = ReturnType<typeof store.getState>;
+
+
 export type AppThunk<ReturnType = void> = ThunkAction<
   ReturnType,
   RootState,

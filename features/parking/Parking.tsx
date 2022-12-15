@@ -19,14 +19,23 @@ import {
   SpaceState,
 } from './parkingSlice'
 
-export function Parking() {
+export const getDuration = (arrival: Date) => {
+  return Math.ceil(Math.abs(new Date().getTime() - arrival.getTime()) / (1000 * 60 * 60))
+}
+
+export const getAmount = (arrival: Date) => {
+  const duration = getDuration(arrival)
+  return duration <= 2 ? 10 : (duration - 2) * 10
+}
+
+const Parking = () => {
   const spaces = useAppSelector(selectSpaces)
   const dispatch = useAppDispatch()
 
   const [numOfSpaces, setNumOfSpaces] = useState(0)
   const [regNum, setRegNum] = useState('')
   const [parkOutSpace, setParkOutSpace] = useState<SpaceState>({
-    id: -1,
+    id: '-1',
     arrival: null,
     registration: null,
   })
@@ -43,35 +52,22 @@ export function Parking() {
   const parkHandler = () => {
     try {
       dispatch(fill(regNum))
-    } catch (error) {
+    } catch (error: any) {
       Alert.alert('Error', error.message)
     }
   }
 
   const parkOutHandler = () => {
-    try {
-      dispatch(remove(parseInt(parkOutSpace.id)))
-      setParkOutModal(false)
-    } catch (error) {
-      Alert.alert('Error', 'Something Went Wrong.')
-    }
+    dispatch(remove(parseInt(parkOutSpace.id)))
+    setParkOutModal(false)
   }
 
-  const getDuration = (arrival: Date) => {
-    return (
-      Math.abs(new Date().getTime() - arrival.getTime()) /
-      (1000 * 60 * 60)
-    ).toFixed(2)
-  }
 
-  const getAmount = (arrival: Date) => {
-    const duration = parseInt(getDuration(arrival))
-    return duration <= 2 ? 10 : (duration - 2) * 10
-  }
 
   return spaces.length === 0 ? (
     <View style={styles.screen}>
       <TextInput
+        accessibilityLabel='spaceTextInput'
         placeholder="Enter the number of Spaces"
         keyboardType={'number-pad'}
         style={styles.input}
@@ -80,16 +76,17 @@ export function Parking() {
           setNumOfSpaces(parseInt(text) ? parseInt(text) : 0)
         }
       />
-      <TouchableOpacity onPress={initializeHandler} style={styles.button}>
+      <TouchableOpacity accessibilityLabel="createParkingButton" onPress={initializeHandler} style={styles.button}>
         <Text style={styles.buttonText}>Create Parking Lot</Text>
       </TouchableOpacity>
     </View>
   ) : (
-    <ScrollView contentContainerStyle={styles.scrollContent}>
+    <ScrollView accessibilityLabel='scrollView' contentContainerStyle={styles.scrollContent}>
       <Modal
         visible={parkOutModal}
         transparent={true}
         onRequestClose={() => setParkOutModal(false)}
+        accessibilityLabel='modal'
       >
         <View style={styles.dialogContainer}>
           <View style={styles.dialogBox}>
@@ -116,12 +113,13 @@ export function Parking() {
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity
+                accessibilityLabel='modalCancelButton'
                 style={styles.button}
                 onPress={() => setParkOutModal(false)}
               >
                 <Text style={styles.buttonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.button} onPress={parkOutHandler}>
+              <TouchableOpacity accessibilityLabel='modalPaidButton' style={styles.button} onPress={parkOutHandler}>
                 <Text style={styles.buttonText}>Paid</Text>
               </TouchableOpacity>
             </View>
@@ -131,12 +129,13 @@ export function Parking() {
 
       <View style={styles.inputContainer}>
         <TextInput
+          accessibilityLabel='regTextInput'
           placeholder="Enter Regitration Number"
           value={regNum}
           onChangeText={(text) => setRegNum(text)}
           style={styles.input}
         />
-        <TouchableOpacity onPress={parkHandler} style={styles.button}>
+        <TouchableOpacity accessibilityLabel="parkButton" onPress={parkHandler} style={styles.button}>
           <Text style={styles.buttonText}>Park</Text>
         </TouchableOpacity>
       </View>
@@ -144,6 +143,7 @@ export function Parking() {
       <View style={styles.spaceContainer}>
         {spaces.map((space, index) => (
           <TouchableOpacity
+            accessibilityLabel={'vacateButton' + index}
             key={index}
             style={space.registration ? styles.parkedSpace : styles.emptySpace}
             // onPress={() => {
@@ -264,3 +264,5 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 })
+
+export default Parking

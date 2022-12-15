@@ -24,6 +24,10 @@ export const parkingSlice = createSlice({
   initialState,
   reducers: {
     initialize: (state, action: PayloadAction<number>) => {
+
+      if (action.payload <= 0)
+        throw new Error('Please enter a valid value')
+
       for (let index = 0; index < action.payload; index++) {
         state.spaces.push({
           id: index.toString(),
@@ -34,8 +38,15 @@ export const parkingSlice = createSlice({
       state.numSpaces = action.payload
     },
     fill: (state, action: PayloadAction<string>) => {
+      let isAlreadyExist = false
+      state.spaces.map((space) => {
+        if (space.registration === action.payload)
+          isAlreadyExist = true
+      })
       if (state.numSpaces === state.numParkedSpaces)
-        throw new Error('Parking Full')
+        throw new Error('Parking Full.')
+      else if (isAlreadyExist)
+        throw new Error('Vehicle with same registration already parked.')
 
       let isParked = false
       while (!isParked) {
@@ -51,6 +62,7 @@ export const parkingSlice = createSlice({
       }
     },
     remove: (state, action: PayloadAction<number>) => {
+
       state.spaces[action.payload] = {
         id: action.payload.toString(),
         registration: null,
